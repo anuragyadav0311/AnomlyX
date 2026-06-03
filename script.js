@@ -1,12 +1,100 @@
+function createReferenceImage(defectName, severity, accentColor) {
+  const severityMap = {
+    low: { count: 3, label: "LOW", opacity: 0.32 },
+    medium: { count: 6, label: "MEDIUM", opacity: 0.48 },
+    high: { count: 10, label: "HIGH", opacity: 0.66 }
+  };
+  const level = severityMap[severity];
+  const marks = Array.from({ length: level.count }, (_, index) => {
+    const x = 58 + (index * 67) % 560;
+    const y = 72 + (index * 41) % 275;
+    const width = severity === "high" ? 112 : severity === "medium" ? 82 : 52;
+    return `<ellipse cx="${x}" cy="${y}" rx="${width / 2}" ry="${8 + index % 4}" fill="${accentColor}" opacity="${level.opacity}" transform="rotate(${-12 + index * 7} ${x} ${y})"/>`;
+  }).join("");
+
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="900" height="560" viewBox="0 0 900 560">
+      <defs>
+        <linearGradient id="metal" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0" stop-color="#e8edf3"/>
+          <stop offset="0.45" stop-color="#aeb8c5"/>
+          <stop offset="1" stop-color="#f8fafc"/>
+        </linearGradient>
+        <filter id="grain">
+          <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch"/>
+          <feColorMatrix type="saturate" values="0"/>
+          <feComponentTransfer>
+            <feFuncA type="table" tableValues="0 0.24"/>
+          </feComponentTransfer>
+        </filter>
+      </defs>
+      <rect width="900" height="560" fill="url(#metal)"/>
+      <rect width="900" height="560" filter="url(#grain)" opacity="0.5"/>
+      <g>${marks}</g>
+      <rect x="34" y="34" width="282" height="72" rx="8" fill="#0b1c30" opacity="0.86"/>
+      <text x="56" y="68" fill="#ffffff" font-family="Arial, sans-serif" font-size="24" font-weight="700">${defectName}</text>
+      <text x="56" y="94" fill="${accentColor}" font-family="Arial, sans-serif" font-size="18" font-weight="700">${level.label} SEVERITY</text>
+    </svg>
+  `;
+
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
+function createPorosityImage(severity) {
+  const severityMap = {
+    low: { pores: 12, size: 12, label: "LOW", opacity: 0.58 },
+    medium: { pores: 28, size: 18, label: "MEDIUM", opacity: 0.7 },
+    high: { pores: 48, size: 26, label: "HIGH", opacity: 0.82 }
+  };
+  const level = severityMap[severity];
+  const pores = Array.from({ length: level.pores }, (_, index) => {
+    const x = 70 + (index * 83) % 760;
+    const y = 105 + (index * 53) % 360;
+    const radius = Math.max(5, level.size - (index % 7) * 2);
+    return `
+      <circle cx="${x}" cy="${y}" r="${radius}" fill="#151515" opacity="${level.opacity}"/>
+      <circle cx="${x - radius / 3}" cy="${y - radius / 3}" r="${Math.max(2, radius / 4)}" fill="#ffffff" opacity="0.18"/>
+    `;
+  }).join("");
+
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="900" height="560" viewBox="0 0 900 560">
+      <defs>
+        <linearGradient id="metal" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0" stop-color="#cbd5e1"/>
+          <stop offset="0.35" stop-color="#eef2f7"/>
+          <stop offset="0.7" stop-color="#8f9aaa"/>
+          <stop offset="1" stop-color="#f8fafc"/>
+        </linearGradient>
+        <filter id="grain">
+          <feTurbulence type="fractalNoise" baseFrequency="0.72" numOctaves="4" stitchTiles="stitch"/>
+          <feColorMatrix type="saturate" values="0"/>
+          <feComponentTransfer>
+            <feFuncA type="table" tableValues="0 0.28"/>
+          </feComponentTransfer>
+        </filter>
+      </defs>
+      <rect width="900" height="560" fill="url(#metal)"/>
+      <rect width="900" height="560" filter="url(#grain)" opacity="0.62"/>
+      <g>${pores}</g>
+      <rect x="34" y="34" width="294" height="72" rx="8" fill="#0b1c30" opacity="0.88"/>
+      <text x="56" y="68" fill="#ffffff" font-family="Arial, sans-serif" font-size="24" font-weight="700">Porosity</text>
+      <text x="56" y="94" fill="#fd761a" font-family="Arial, sans-serif" font-size="18" font-weight="700">${level.label} SEVERITY</text>
+    </svg>
+  `;
+
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
 const defectData = {
   porosity: {
     name: "Porosity",
     category: "Casting / Welding",
     description: "Small gas pockets or cavities trapped inside or on the surface of the metal.",
     images: {
-      low: "https://images.unsplash.com/photo-1588275979538-1da155af77dd?auto=format&fit=crop&w=900&q=80",
-      medium: "https://images.unsplash.com/photo-1573497491765-dccce02b29df?auto=format&fit=crop&w=900&q=80",
-      high: "https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?auto=format&fit=crop&w=900&q=80"
+      low: "low porous.jpg",
+      medium: "medium porous.jpg",
+      high: "high porous.jpg"
     },
     severity: {
       low: {
@@ -34,9 +122,9 @@ const defectData = {
     category: "Structural",
     description: "Linear fracture or separation caused by stress, cooling rate, fatigue, or poor fusion.",
     images: {
-      low: "https://images.unsplash.com/photo-1518709268805-4e9042af2176?auto=format&fit=crop&w=900&q=80",
-      medium: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80",
-      high: "https://images.unsplash.com/photo-1516937941344-00b4e0337589?auto=format&fit=crop&w=900&q=80"
+      low: "low crack img.jpg",
+      medium: "medium crack img.webp",
+      high: "high crack img.jpg"
     },
     severity: {
       low: {
@@ -64,9 +152,9 @@ const defectData = {
     category: "Welding",
     description: "Non-metallic trapped material inside the weld bead or casting.",
     images: {
-      low: "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&w=900&q=80",
-      medium: "https://images.unsplash.com/photo-1565008447742-97f6f38c985c?auto=format&fit=crop&w=900&q=80",
-      high: "https://images.unsplash.com/photo-1590959651373-a3db0f38a961?auto=format&fit=crop&w=900&q=80"
+      low: "stitch_anomlyx_diagnostic_dashboard/stitch_anomlyx_diagnostic_dashboard/low slug.jpg",
+      medium: "stitch_anomlyx_diagnostic_dashboard/stitch_anomlyx_diagnostic_dashboard/med slug.webp",
+      high: "stitch_anomlyx_diagnostic_dashboard/stitch_anomlyx_diagnostic_dashboard/high slug.png"
     },
     severity: {
       low: {
@@ -89,33 +177,93 @@ const defectData = {
       }
     }
   },
-  undercut: {
-    name: "Undercut",
-    category: "Welding",
-    description: "Groove melted into base metal along the weld toe and not filled by weld metal.",
+  misrun: {
+    name: "Misrun",
+    category: "Casting",
+    description: "Incomplete casting where molten metal fails to fill the mold cavity completely.",
     images: {
-      low: "https://images.unsplash.com/photo-1560461396-ec0ef7bb29dd?auto=format&fit=crop&w=900&q=80",
-      medium: "https://images.unsplash.com/photo-1576354346340-8af2e9a5e619?auto=format&fit=crop&w=900&q=80",
-      high: "https://images.unsplash.com/photo-1589634749000-1f72f1d48f17?auto=format&fit=crop&w=900&q=80"
+      low: "misrun low.jpg",
+      medium: "misrun medium.webp",
+      high: "misrun high.jpg"
     },
     severity: {
       low: {
-        visual: "Shallow groove along weld edge with smooth transition.",
-        root: "Slightly high travel speed or minor electrode angle error.",
-        remedy: "Smooth and inspect the groove, then adjust travel speed.",
-        prevention: ["Maintain correct angle", "Reduce travel speed", "Use consistent arc length"]
+        visual: "Small unfilled edge, corner, or shallow missing detail.",
+        root: "Minor loss of fluidity from slightly low temperature or slow filling.",
+        remedy: "Confirm dimensional tolerance and adjust pouring temperature or fill rate.",
+        prevention: ["Check metal temperature", "Keep mold dry", "Improve venting"]
       },
       medium: {
-        visual: "Noticeable groove along the weld toe that can concentrate stress.",
-        root: "Excess current, fast travel, or poor electrode manipulation.",
-        remedy: "Fill the groove with repair weld and inspect for toe blending.",
-        prevention: ["Reduce current", "Control weave width", "Check weld toe profile"]
+        visual: "Noticeable incomplete section that affects fit or local geometry.",
+        root: "Insufficient metal flow due to low superheat, narrow gates, or trapped air.",
+        remedy: "Scrap if dimensional requirements fail, then increase fill efficiency and venting.",
+        prevention: ["Widen gate path", "Increase superheat", "Improve air escape", "Shorten fill time"]
       },
       high: {
-        visual: "Deep continuous groove causing section loss near the weld.",
-        root: "Severe overheating, excessive current, or poor operator control.",
-        remedy: "Repair weld under controlled settings and perform NDT before accepting the part.",
-        prevention: ["Requalify weld settings", "Supervise repair pass", "Use proper filler rate"]
+        visual: "Major missing portion or incomplete cavity fill.",
+        root: "Severe flow failure from incorrect gating, freezing during fill, or inadequate metal volume.",
+        remedy: "Reject casting and correct mold design, pour volume, and process timing.",
+        prevention: ["Validate mold-fill simulation", "Audit charge weight", "Redesign runners", "Control pour speed"]
+      }
+    }
+  },
+  corrosion: {
+    name: "Corrosion",
+    category: "Service / Surface",
+    description: "Chemical or electrochemical metal degradation that creates rust, pitting, or section loss.",
+    images: {
+      low: "low corr.jpg",
+      medium: "med corr.jpg",
+      high: "high corr.jpg"
+    },
+    severity: {
+      low: {
+        visual: "Light discoloration, early rust film, or small surface spots.",
+        root: "Moisture exposure, poor cleaning, or damaged protective coating.",
+        remedy: "Clean, dry, and recoat the affected area after confirming no pitting.",
+        prevention: ["Keep surface dry", "Repair coating scratches", "Use proper storage"]
+      },
+      medium: {
+        visual: "Visible pitting, scale buildup, or spreading rust patch.",
+        root: "Persistent moisture, chemical exposure, or coating failure.",
+        remedy: "Remove corrosion, measure thickness, apply inhibitor, and restore coating system.",
+        prevention: ["Inspect coating regularly", "Control humidity", "Avoid chloride exposure", "Use corrosion inhibitor"]
+      },
+      high: {
+        visual: "Deep pits, flaking scale, perforation risk, or measurable section loss.",
+        root: "Long-term aggressive environment, galvanic attack, or neglected protection.",
+        remedy: "Remove from service, assess remaining thickness, repair or replace affected component.",
+        prevention: ["Review material grade", "Add cathodic protection", "Improve drainage", "Schedule thickness checks"]
+      }
+    }
+  },
+  shrinkage: {
+    name: "Shrinkage",
+    category: "Casting",
+    description: "Void or depression caused when metal contracts during solidification without enough feed metal.",
+    images: {
+      low: "low shrink.jpg",
+      medium: "med shrink.jpg",
+      high: "high shrink.jpg"
+    },
+    severity: {
+      low: {
+        visual: "Small sink mark or shallow depression on a non-critical surface.",
+        root: "Minor feeding imbalance or local hot spot during solidification.",
+        remedy: "Check dimensional tolerance and tune riser or cooling control.",
+        prevention: ["Balance section thickness", "Use local chills", "Confirm riser feed path"]
+      },
+      medium: {
+        visual: "Visible cavity, sink, or internal void indication near a thicker section.",
+        root: "Insufficient riser feeding, poor directional solidification, or isolated hot spot.",
+        remedy: "Inspect internally, reject if load-bearing, and revise riser/chill placement.",
+        prevention: ["Improve riser size", "Add chills", "Review solidification pattern", "Avoid abrupt thick sections"]
+      },
+      high: {
+        visual: "Large shrinkage cavity, spongy zone, or void network in a critical section.",
+        root: "Major feeding failure or casting design that prevents directional solidification.",
+        remedy: "Reject the casting and redesign feed system before repeating the run.",
+        prevention: ["Run solidification simulation", "Redesign risers", "Modify part geometry", "Control cooling rate"]
       }
     }
   }
@@ -207,15 +355,17 @@ function renderLibrary(filter = "") {
     })
     .map(([key, defect]) => `
       <article class="defect-card">
-        <img src="${defect.images.medium}" alt="${defect.name} medium severity reference">
+        <div class="defect-image-grid">
+          ${["low", "medium", "high"].map((level) => `
+            <button class="defect-severity-image" type="button" data-use-defect="${key}" data-use-severity="${level}">
+              <img src="${defect.images[level]}" alt="${defect.name} ${level} severity reference">
+              <span class="${level}">${titleCase(level)}</span>
+            </button>
+          `).join("")}
+        </div>
         <div class="defect-card-body">
           <h2>${defect.name}</h2>
           <p>${defect.description}</p>
-          <div class="mini-severity">
-            <span class="low">Low</span>
-            <span class="medium">Medium</span>
-            <span class="high">High</span>
-          </div>
           <button class="ghost-action" data-use-defect="${key}">
             <span class="material-symbols-outlined">biotech</span>
             Use in Diagnosis
@@ -348,6 +498,9 @@ function bindEvents() {
     const useDefect = event.target.closest("[data-use-defect]");
     if (useDefect) {
       state.defectKey = useDefect.dataset.useDefect;
+      if (useDefect.dataset.useSeverity) {
+        state.severity = useDefect.dataset.useSeverity;
+      }
       elements.defectSelect.value = state.defectKey;
       renderDiagnosis();
       showPage("diagnose");

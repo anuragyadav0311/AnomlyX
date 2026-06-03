@@ -556,13 +556,6 @@ textarea:focus {
   box-shadow: 0 8px 20px rgba(11, 28, 48, 0.06);
 }
 
-.defect-card img {
-  display: block;
-  width: 100%;
-  aspect-ratio: 1.7;
-  object-fit: cover;
-}
-
 .defect-card-body {
   padding: 16px;
 }
@@ -578,34 +571,58 @@ textarea:focus {
   line-height: 1.5;
 }
 
-.mini-severity {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 14px;
+.defect-image-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border);
 }
 
-.mini-severity span {
-  flex: 1;
-  padding: 6px 4px;
+.defect-severity-image {
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+  border: 0;
+  background: var(--surface-low);
+  padding: 0;
+}
+
+.defect-severity-image img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1.08;
+  object-fit: cover;
+  transition: transform 180ms ease;
+}
+
+.defect-severity-image:hover img {
+  transform: scale(1.04);
+}
+
+.defect-severity-image span {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  padding: 4px 6px;
   border-radius: 999px;
   font-family: "JetBrains Mono", monospace;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 800;
   text-align: center;
   text-transform: uppercase;
 }
 
-.mini-severity .low {
+.defect-severity-image .low {
   background: #d1fae5;
   color: #065f46;
 }
 
-.mini-severity .medium {
+.defect-severity-image .medium {
   background: #fef3c7;
   color: #92400e;
 }
 
-.mini-severity .high {
+.defect-severity-image .high {
   background: #fee2e2;
   color: #991b1b;
 }
