@@ -2,11 +2,12 @@
 
 AnomlyX is a frontend prototype for industrial metal defect diagnosis. It helps an inspector upload an inspection image for backend prediction or manually select a defect type and severity level, then generates visual signs, likely root causes, engineering remedies, prevention checks, and a printable inspection report.
 
-The project has a static frontend built with HTML, CSS, and JavaScript plus a FastAPI backend for image prediction. Until a trained model is connected, the backend returns a filename-based placeholder prediction so the frontend/backend workflow can be tested end to end.
+The project has a static frontend built with HTML, CSS, and JavaScript plus a FastAPI backend for image prediction. A MobileNetV2 transfer-learning model has been trained for defect-type classification; when the trained Keras model is present at `ml/saved_models/defect_classifier.keras`, the backend uses real ML inference and falls back to a filename-based placeholder only when the model is unavailable.
 
 ## Features
 
 - Image upload wired to the FastAPI `POST /predict` endpoint.
+- Trained MobileNetV2 defect classifier with real backend inference support.
 - Manual defect diagnosis by defect type and severity.
 - Severity levels for `Low`, `Medium`, and `High`.
 - Defect reference image thumbnails for severity comparison.
@@ -18,7 +19,7 @@ The project has a static frontend built with HTML, CSS, and JavaScript plus a Fa
 
 ## Supported Defect List
 
-The current manual knowledge base includes:
+The current manual knowledge base and trained ML classifier include:
 
 | Defect | Process Area | Description |
 | --- | --- | --- |
@@ -30,6 +31,35 @@ The current manual knowledge base includes:
 | Shrinkage | Casting | Void or depression caused by metal contraction during solidification. |
 
 Each defect has three severity entries: low, medium, and high. Every severity entry includes visual signs, root cause notes, recommended remedies, and prevention checklist items.
+
+## ML Training Status
+
+The AnomlyX defect classifier has been trained locally using MobileNetV2 transfer learning.
+
+| Item | Value |
+| --- | --- |
+| Model | MobileNetV2 + custom dense classification head |
+| Input size | 224 x 224 RGB |
+| Classes | Corrosion, Crack, Misrun, Porosity, Shrinkage, Slag_Inclusion |
+| Total images | 935 |
+| Training split | 748 images |
+| Validation split | 187 images |
+| Best validation accuracy | 83.42% |
+| Saved model path | `ml/saved_models/defect_classifier.keras` |
+| Training curve | `ml/results/training_history.png` |
+
+Dataset distribution:
+
+| Class | Images |
+| --- | ---: |
+| Corrosion | 71 |
+| Crack | 52 |
+| Misrun | 260 |
+| Porosity | 261 |
+| Shrinkage | 260 |
+| Slag_Inclusion | 31 |
+
+The trained model predicts defect type. Severity is still derived from filename hints or confidence heuristics in the backend response.
 
 ## Project Structure
 
@@ -96,7 +126,7 @@ Available endpoints:
 
 - `GET /health` checks API, dataset, and model configuration.
 - `GET /classes` reads defect folders from `Defect_Dataset`.
-- `POST /predict` accepts a JPG, PNG, or WEBP image.
+- `POST /predict` accepts a JPG, PNG, or WEBP image and uses the trained model when available.
 
 ## Basic Usage
 
@@ -111,7 +141,7 @@ Available endpoints:
 ## Known Defects and Limitations
 
 - The extra `manual-porosity-enhanced.png` asset is not currently used by the app workflow.
-- The backend prediction endpoint currently uses a filename-based placeholder until real inference code is connected.
+- The backend falls back to a filename-based placeholder if the trained model file is not present.
 - The app uses static frontend data. Defects, remedies, and image paths are hard-coded in `script.js`.
 - Saved results only store the latest report in browser `localStorage`; there is no report history database.
 - Print/export currently relies on the browser print dialog instead of a dedicated PDF export library.
@@ -123,8 +153,8 @@ Available endpoints:
 - Keep new image assets named with the same pattern: `assets/defects/<severity>-<defect>.png`.
 - Add more defect categories such as blowhole, undercut, lack of fusion, pitting corrosion, cold shut, and surface roughness.
 - Add report history, exportable PDFs, and persistent inspection records.
-- Replace the backend placeholder predictor with TensorFlow, PyTorch, ONNX, or Teachable Machine inference.
-- Add image upload and frontend ML integration using the backend prediction endpoint.
+- Improve the trained model with more balanced images and severity-aware labels.
+- Add image upload result confidence visualization in the frontend.
 - Validate root causes and remedies against welding/casting inspection standards.
 
 ## Tech Stack
@@ -138,4 +168,4 @@ Available endpoints:
 
 ## Status
 
-AnomlyX is in the manual prototype plus backend scaffold phase. The current focus is collecting enough labeled images, then replacing the placeholder predictor with a trained model.
+AnomlyX now has a trained defect-type classifier connected through the backend inference path. The current focus is improving dataset balance, adding severity classification, and validating model outputs against quality-control expertise.

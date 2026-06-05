@@ -8,12 +8,15 @@ This module trains a CNN-based image classifier to identify **6 types** of metal
 
 | Class | Description | Training Images |
 |-------|-------------|---------------:|
-| Corrosion | Surface degradation (rust, pitting) | ~74 |
-| Crack | Linear fractures (stress, fatigue) | ~55 |
-| Misrun | Incomplete casting fill | ~263 |
-| Porosity | Gas pockets/cavities | ~264 |
-| Shrinkage | Solidification voids | ~263 |
-| Slag Inclusion | Trapped non-metallic material | ~34 |
+| Corrosion | Surface degradation (rust, pitting) | 71 |
+| Crack | Linear fractures (stress, fatigue) | 52 |
+| Misrun | Incomplete casting fill | 260 |
+| Porosity | Gas pockets/cavities | 261 |
+| Shrinkage | Solidification voids | 260 |
+| Slag Inclusion | Trapped non-metallic material | 31 |
+
+Current dataset size: **935 images** split into **748 training images** and
+**187 validation images**.
 
 ## Architecture
 
@@ -32,16 +35,47 @@ Input (224×224×3)
 1. **Phase 1 (Frozen)**: Train only the classification head (~20 epochs)
 2. **Phase 2 (Fine-tune)**: Unfreeze top MobileNetV2 layers, train with very low LR (~30 epochs)
 
+## Latest Training Result
+
+The model has been trained and saved locally at
+`ml/saved_models/defect_classifier.keras`.
+
+| Metric | Value |
+| --- | ---: |
+| Phase 1 best validation accuracy | 83.42% |
+| Phase 2 best validation accuracy | 83.42% |
+| Best overall validation accuracy | 83.42% |
+| Total parameters | 2,422,726 |
+| Trainable parameters in frozen phase | 164,742 |
+| Non-trainable parameters in frozen phase | 2,257,984 |
+
+Training artifacts:
+
+- Model: `saved_models/defect_classifier.keras`
+- Class labels: `saved_models/class_names.json`
+- Training curves: `results/training_history.png`
+
+The model predicts the six defect types listed above. Severity classification is
+not learned by this model yet; backend severity is inferred from filename hints
+or confidence thresholds.
+
 ## Setup
+
+TensorFlow is required and this project should be run with **Python 3.10, 3.11,
+or 3.12**. Python 3.13+ may create a venv successfully, but pip will not find a
+compatible TensorFlow wheel.
 
 ```bash
 cd ml
-python -m venv .venv
+python3.12 -m venv .venv
 source .venv/bin/activate   # Linux/Mac
 # .venv\Scripts\activate    # Windows
 
 pip install -r requirements.txt
 ```
+
+If `python3.12` is not installed on your system, install Python 3.12 first, then
+recreate `.venv`.
 
 ## Usage
 

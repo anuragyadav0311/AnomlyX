@@ -13,6 +13,10 @@ import argparse
 import json
 from pathlib import Path
 
+from env_check import ensure_supported_python
+
+ensure_supported_python()
+
 import numpy as np
 import tensorflow as tf
 from PIL import Image

@@ -16,6 +16,10 @@ Saves:
 
 import json
 
+from env_check import ensure_supported_python
+
+ensure_supported_python()
+
 import matplotlib
 matplotlib.use("Agg")  # Non-interactive backend for headless training
 import matplotlib.pyplot as plt

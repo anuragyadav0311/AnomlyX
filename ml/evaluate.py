@@ -9,6 +9,10 @@ Generates:
     ml/results/classification_report.txt — Per-class precision/recall/F1
 """
 
+from env_check import ensure_supported_python
+
+ensure_supported_python()
+
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
