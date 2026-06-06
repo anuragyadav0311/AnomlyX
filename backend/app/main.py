@@ -4,7 +4,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from .config import ALLOWED_CONTENT_TYPES, DATASET_DIR, MAX_UPLOAD_BYTES, MODEL_PATH, PROJECT_ROOT
-from .predictor import discover_classes, is_model_ready, predict_image
+from .predictor import discover_classes, get_model_status, predict_image
 
 
 app = FastAPI(
@@ -55,12 +55,17 @@ def script() -> FileResponse:
 
 @app.get("/health")
 def health() -> dict[str, object]:
+    model_status = get_model_status(load=True)
     return {
         "status": "ok",
         "dataset_dir": str(DATASET_DIR),
         "dataset_found": DATASET_DIR.exists(),
-        "model_path": str(MODEL_PATH),
-        "model_ready": is_model_ready(),
+        "model_path": model_status.path,
+        "model_file_found": model_status.file_found,
+        "model_ready": model_status.loadable,
+        "model_loaded": model_status.loaded,
+        "model_error": model_status.error,
+        "class_names": model_status.class_names,
     }
 
 

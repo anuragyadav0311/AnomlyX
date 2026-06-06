@@ -95,7 +95,7 @@ cd backend
 python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8001
+uvicorn app.main:app --reload --port 8002
 ```
 
 Terminal 2 - frontend:
@@ -114,7 +114,7 @@ http://localhost:8000
 Backend API docs:
 
 ```text
-http://127.0.0.1:8001/docs
+http://127.0.0.1:8002/docs
 ```
 
 ### Windows PowerShell
@@ -127,7 +127,7 @@ cd backend
 py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8001
+uvicorn app.main:app --reload --port 8002
 ```
 
 Terminal 2 - frontend:
@@ -146,7 +146,7 @@ http://localhost:8000
 Backend API docs:
 
 ```text
-http://127.0.0.1:8001/docs
+http://127.0.0.1:8002/docs
 ```
 
 The backend automatically looks for:
@@ -169,7 +169,7 @@ cd backend
 python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8001
+uvicorn app.main:app --reload --port 8002
 ```
 
 On Windows PowerShell:
@@ -179,7 +179,7 @@ cd backend
 py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8001
+uvicorn app.main:app --reload --port 8002
 ```
 
 2. Serve the frontend from the project root:
@@ -211,7 +211,7 @@ cd backend
 python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8001
+uvicorn app.main:app --reload --port 8002
 ```
 
 On Windows PowerShell:
@@ -221,13 +221,13 @@ cd backend
 py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8001
+uvicorn app.main:app --reload --port 8002
 ```
 
 Open the API docs:
 
 ```text
-http://127.0.0.1:8001/docs
+http://127.0.0.1:8002/docs
 ```
 
 Available endpoints:

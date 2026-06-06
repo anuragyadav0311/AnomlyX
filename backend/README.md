@@ -12,7 +12,7 @@ placeholder so the API can still be tested.
 - `GET /classes` reads defect folders from `Defect_Dataset`.
 - `POST /predict` accepts a JPG, PNG, or WEBP image and returns a prediction-shaped response.
 
-The root frontend posts uploaded images to `http://127.0.0.1:8001/predict` and applies the returned `defect` and `severity` to the diagnosis/report UI.
+The root frontend posts uploaded images to `http://127.0.0.1:8002/predict` and applies the returned `defect` and `severity` to the diagnosis/report UI.
 
 ## Setup
 
@@ -42,13 +42,13 @@ pip install -r requirements.txt
 Linux/macOS or Windows PowerShell:
 
 ```bash
-uvicorn app.main:app --reload --port 8001
+uvicorn app.main:app --reload --port 8002
 ```
 
 Open:
 
 ```text
-http://127.0.0.1:8001/docs
+http://127.0.0.1:8002/docs
 ```
 
 ## Frontend
@@ -80,7 +80,7 @@ http://localhost:8000
 Use the Swagger page at `/docs`, or run:
 
 ```bash
-curl -X POST "http://127.0.0.1:8001/predict" -F "file=@../assets/defects/high-crack.png"
+curl -X POST "http://127.0.0.1:8002/predict" -F "file=@../assets/defects/high-crack.png"
 ```
 
 ## Environment

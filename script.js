@@ -1,5 +1,5 @@
 const defectAssetPath = "assets/defects/";
-const apiBaseUrl = window.ANOMLYX_API_BASE_URL || "http://127.0.0.1:8001";
+const apiBaseUrl = window.ANOMLYX_API_BASE_URL || "http://127.0.0.1:8002";
 
 function getDefectImage(fileName) {
   return `${defectAssetPath}${fileName}`;
@@ -359,7 +359,12 @@ async function checkBackendConnection() {
       throw new Error(payload.detail || "Health check failed.");
     }
 
-    const modelText = payload.model_ready ? "model ready" : "placeholder mode";
+    let modelText = "placeholder mode";
+    if (payload.model_ready) {
+      modelText = "model ready";
+    } else if (payload.model_file_found && payload.model_error) {
+      modelText = `model file found, runtime missing: ${payload.model_error}`;
+    }
     setApiStatus(`Backend connected (${modelText}).`, payload.model_ready ? "success" : "warning");
   } catch (error) {
     setApiStatus(`Backend unavailable: ${error.message}`, "error");
