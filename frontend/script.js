@@ -606,8 +606,6 @@ function bindEvents() {
 
   document.getElementById("updateBtn").addEventListener("click", generateDiagnosisReport);
 
-  document.getElementById("generateBtn").addEventListener("click", generateDiagnosisReport);
-
   document.getElementById("resetBtn").addEventListener("click", () => {
     window.setTimeout(() => {
       state.defectKey = "porosity";
