@@ -694,7 +694,7 @@ function bindEvents() {
 
 function init() {
   state.reportId = `AX-${Math.floor(1000 + Math.random() * 9000)}`;
-  applyTheme(localStorage.getItem(themeStorageKey) || "light");
+  applyTheme(localStorage.getItem(themeStorageKey) || "dark");
   populateDefectSelect();
   renderLibrary();
   renderDiagnosis();
