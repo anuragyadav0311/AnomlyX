@@ -1,6 +1,7 @@
 const defectAssetPath = "assets/defects/";
 const apiBaseUrl = window.ANOMLYX_API_BASE_URL || "http://127.0.0.1:8002";
 const themeStorageKey = "anomlyx-theme";
+const historyStorageKey = "anomlyx-history";
 
 function getDefectImage(fileName) {
   return `${defectAssetPath}${fileName}`;
@@ -282,6 +283,7 @@ const state = {
   severity: "medium",
   reportId: "AX-0001",
   uploadedImageUrl: "",
+  uploadedImageDataUrl: "",
   prediction: null
 };
 
@@ -301,6 +303,11 @@ const elements = {
   resultSourceLabel: document.getElementById("resultSourceLabel"),
   libraryGrid: document.getElementById("libraryGrid"),
   librarySearch: document.getElementById("librarySearch"),
+  historyGrid: document.getElementById("historyGrid"),
+  historyUserFilter: document.getElementById("historyUserFilter"),
+  historyEmpty: document.getElementById("historyEmpty"),
+  historyCount: document.getElementById("historyCount"),
+  clearHistoryBtn: document.getElementById("clearHistoryBtn"),
   toast: document.getElementById("toast"),
   guideButton: document.getElementById("guideButton"),
   guideModal: document.getElementById("guideModal"),
@@ -311,6 +318,31 @@ const elements = {
 
 function titleCase(value) {
   return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (character) => {
+    return {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    }[character];
+  });
+}
+
+function createReportId() {
+  return `AX-${Math.floor(1000 + Math.random() * 9000)}`;
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener("load", () => resolve(reader.result));
+    reader.addEventListener("error", () => reject(reader.error));
+    reader.readAsDataURL(file);
+  });
 }
 
 function normalizeDefectKey(value) {
@@ -337,7 +369,7 @@ function getCurrentFinding() {
   return {
     defect,
     finding: defect.severity[state.severity],
-    image: state.uploadedImageUrl || defect.images[state.severity]
+    image: state.uploadedImageUrl || state.uploadedImageDataUrl || defect.images[state.severity]
   };
 }
 
@@ -400,10 +432,19 @@ async function predictUploadedImage(file) {
     URL.revokeObjectURL(state.uploadedImageUrl);
   }
   state.uploadedImageUrl = URL.createObjectURL(file);
+  state.uploadedImageDataUrl = "";
   state.prediction = null;
   elements.uploadLabel.textContent = file.name;
   setApiStatus("Sending image to backend...", "loading");
   renderDiagnosis();
+
+  readFileAsDataUrl(file)
+    .then((dataUrl) => {
+      state.uploadedImageDataUrl = dataUrl;
+    })
+    .catch(() => {
+      state.uploadedImageDataUrl = "";
+    });
 
   const formData = new FormData();
   formData.append("file", file);
@@ -449,7 +490,7 @@ function renderSeverityThumbs() {
 function renderDiagnosis() {
   const { defect, finding, image } = getCurrentFinding();
   elements.resultImage.src = image;
-  elements.resultSourceLabel.textContent = state.uploadedImageUrl ? "Uploaded image" : "Reference";
+  elements.resultSourceLabel.textContent = state.uploadedImageUrl || state.uploadedImageDataUrl ? "Uploaded image" : "Reference";
 
   document.querySelectorAll("[data-severity]").forEach((button) => {
     button.classList.toggle("active", button.dataset.severity === state.severity);
@@ -485,6 +526,78 @@ function renderLibrary(filter = "") {
         </div>
       </article>
     `)
+    .join("");
+}
+
+function getHistoryRecords() {
+  try {
+    const records = JSON.parse(localStorage.getItem(historyStorageKey) || "[]");
+    return Array.isArray(records) ? records : [];
+  } catch {
+    return [];
+  }
+}
+
+function setHistoryRecords(records) {
+  localStorage.setItem(historyStorageKey, JSON.stringify(records));
+}
+
+function getSelectedHistoryUser() {
+  return elements.historyUserFilter.value || "all";
+}
+
+function renderHistory() {
+  const records = getHistoryRecords();
+  const inspectors = [...new Set(records.map((record) => record.inspector || "Inspector not set"))].sort();
+  const selectedUser = inspectors.includes(getSelectedHistoryUser()) ? getSelectedHistoryUser() : "all";
+
+  elements.historyUserFilter.innerHTML = [
+    '<option value="all">All inspectors</option>',
+    ...inspectors.map((inspector) => `<option value="${escapeHtml(inspector)}">${escapeHtml(inspector)}</option>`)
+  ].join("");
+  elements.historyUserFilter.value = selectedUser;
+
+  const visibleRecords = records.filter((record) => {
+    return selectedUser === "all" || (record.inspector || "Inspector not set") === selectedUser;
+  });
+
+  elements.historyCount.textContent = `${visibleRecords.length} saved ${visibleRecords.length === 1 ? "record" : "records"}`;
+  elements.historyEmpty.hidden = visibleRecords.length > 0;
+  elements.historyGrid.innerHTML = visibleRecords
+    .map((record) => {
+      const createdAt = new Date(record.createdAt);
+      const dateText = Number.isNaN(createdAt.getTime()) ? "Date unavailable" : createdAt.toLocaleString();
+      const confidence = record.prediction?.confidence ? `${Math.round(record.prediction.confidence * 100)}%` : "Manual";
+
+      return `
+        <article class="history-card">
+          <img src="${escapeHtml(record.image)}" alt="${escapeHtml(record.defect)} history image">
+          <div class="history-card-body">
+            <div class="history-card-top">
+              <div>
+                <small>${escapeHtml(record.id)}</small>
+                <h2>${escapeHtml(record.defect)}</h2>
+              </div>
+              <span class="severity-pill ${escapeHtml(record.severity)}">${escapeHtml(titleCase(record.severity))}</span>
+            </div>
+            <div class="history-meta">
+              <span><strong>Inspector</strong>${escapeHtml(record.inspector || "Inspector not set")}</span>
+              <span><strong>Batch</strong>${escapeHtml(record.batch || "Not specified")}</span>
+              <span><strong>Material</strong>${escapeHtml(record.material || "Not specified")}</span>
+              <span><strong>Confidence</strong>${escapeHtml(confidence)}</span>
+            </div>
+            <p>${escapeHtml(record.notes || "No additional notes recorded.")}</p>
+            <div class="history-card-actions">
+              <span>${escapeHtml(dateText)}</span>
+              <button class="ghost-action" type="button" data-history-load="${escapeHtml(record.id)}">
+                <span class="material-symbols-outlined">open_in_new</span>
+                Open
+              </button>
+            </div>
+          </div>
+        </article>
+      `;
+    })
     .join("");
 }
 
@@ -543,21 +656,29 @@ function closeGuide() {
 }
 
 function saveResult() {
-  const { defect } = getCurrentFinding();
+  const { defect, finding, image } = getCurrentFinding();
   const saved = {
     id: state.reportId,
+    defectKey: state.defectKey,
     defect: defect.name,
     severity: state.severity,
-    inspector: elements.inspectorInput.value,
-    batch: elements.batchInput.value,
-    material: elements.materialInput.value,
-    location: elements.locationInput.value,
-    notes: elements.notesInput.value,
+    inspector: elements.inspectorInput.value.trim() || "Inspector not set",
+    batch: elements.batchInput.value.trim(),
+    material: elements.materialInput.value.trim(),
+    location: elements.locationInput.value.trim(),
+    notes: elements.notesInput.value.trim(),
+    image: state.uploadedImageDataUrl || image,
+    root: finding.root,
+    remedy: finding.remedy,
+    prevention: finding.prevention,
     prediction: state.prediction,
     createdAt: new Date().toISOString()
   };
+
   localStorage.setItem("anomlyx-last-report", JSON.stringify(saved));
-  showToast("Result saved in browser storage.");
+  setHistoryRecords([saved, ...getHistoryRecords().filter((record) => record.id !== saved.id)].slice(0, 100));
+  renderHistory();
+  showToast("Diagnosis saved to history.");
 }
 
 function applyTheme(theme) {
@@ -573,6 +694,7 @@ function applyTheme(theme) {
 
 function generateDiagnosisReport() {
   renderDiagnosis();
+  saveResult();
   showPage("report");
   window.scrollTo({ top: 0, behavior: "smooth" });
   showToast("Diagnosis generated.");
@@ -616,6 +738,7 @@ function bindEvents() {
         URL.revokeObjectURL(state.uploadedImageUrl);
       }
       state.uploadedImageUrl = "";
+      state.uploadedImageDataUrl = "";
       elements.imageInput.value = "";
       elements.uploadLabel.textContent = "Upload inspection image";
       setApiStatus("Backend ready for image prediction.");
@@ -655,6 +778,14 @@ function bindEvents() {
     elements[key].addEventListener("input", renderReport);
   });
 
+  elements.historyUserFilter.addEventListener("change", renderHistory);
+
+  elements.clearHistoryBtn.addEventListener("click", () => {
+    setHistoryRecords([]);
+    renderHistory();
+    showToast("History cleared.");
+  });
+
   document.addEventListener("click", (event) => {
     const jump = event.target.closest("[data-jump]");
     if (jump) {
@@ -673,6 +804,28 @@ function bindEvents() {
       renderDiagnosis();
       showPage("diagnose");
       showToast(`${defectData[state.defectKey].name} loaded into diagnosis.`);
+    }
+
+    const historyLoad = event.target.closest("[data-history-load]");
+    if (historyLoad) {
+      const record = getHistoryRecords().find((item) => item.id === historyLoad.dataset.historyLoad);
+      if (!record) return;
+      state.reportId = record.id;
+      state.defectKey = record.defectKey || normalizeDefectKey(record.defect) || "porosity";
+      state.severity = normalizeSeverity(record.severity) || "medium";
+      state.prediction = record.prediction || null;
+      state.uploadedImageUrl = "";
+      state.uploadedImageDataUrl = record.image || "";
+      elements.defectSelect.value = state.defectKey;
+      elements.inspectorInput.value = record.inspector || "";
+      elements.batchInput.value = record.batch || "";
+      elements.materialInput.value = record.material || "";
+      elements.locationInput.value = record.location || "";
+      elements.notesInput.value = record.notes || "";
+      elements.uploadLabel.textContent = "History image loaded";
+      renderDiagnosis();
+      showPage("report");
+      showToast(`${record.id} opened.`);
     }
   });
 
@@ -693,10 +846,11 @@ function bindEvents() {
 }
 
 function init() {
-  state.reportId = `AX-${Math.floor(1000 + Math.random() * 9000)}`;
+  state.reportId = createReportId();
   applyTheme(localStorage.getItem(themeStorageKey) || "dark");
   populateDefectSelect();
   renderLibrary();
+  renderHistory();
   renderDiagnosis();
   bindEvents();
   checkBackendConnection();

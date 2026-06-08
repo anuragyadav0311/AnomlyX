@@ -45,6 +45,10 @@
         <span class="material-symbols-outlined">inventory_2</span>
         Defect Library
       </button>
+      <button class="side-link" data-jump="history">
+        <span class="material-symbols-outlined">history</span>
+        History
+      </button>
       <button class="side-link" data-jump="report">
         <span class="material-symbols-outlined">print</span>
         Report
@@ -155,6 +159,33 @@
           </label>
         </div>
         <div class="library-grid" id="libraryGrid"></div>
+      </section>
+
+      <section class="page" id="page-history" data-page="history">
+        <div class="page-header">
+          <div>
+            <p class="eyebrow">Saved inspections</p>
+            <h1>History</h1>
+            <p>Review generated diagnoses saved for each inspector.</p>
+          </div>
+          <label class="search-box">
+            Inspector
+            <select id="historyUserFilter"></select>
+          </label>
+        </div>
+        <div class="history-toolbar">
+          <span id="historyCount">0 saved records</span>
+          <button class="ghost-action" id="clearHistoryBtn" type="button">
+            <span class="material-symbols-outlined">delete</span>
+            Clear History
+          </button>
+        </div>
+        <div class="history-grid" id="historyGrid"></div>
+        <div class="empty-state" id="historyEmpty">
+          <span class="material-symbols-outlined">history</span>
+          <strong>No saved diagnoses yet</strong>
+          <p>Generated reports will appear here automatically.</p>
+        </div>
       </section>
 
       <section class="page report-page" id="page-report" data-page="report">
