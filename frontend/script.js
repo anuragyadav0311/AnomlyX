@@ -303,6 +303,7 @@ const elements = {
   loginRoleGroup: document.getElementById("loginRoleGroup"),
   loginNameInput: document.getElementById("loginNameInput"),
   authUserName: document.getElementById("authUserName"),
+  sidebarRoleName: document.getElementById("sidebarRoleName"),
   logoutButton: document.getElementById("logoutButton"),
   defectSelect: document.getElementById("defectSelect"),
   severityGroup: document.getElementById("severityGroup"),
@@ -350,6 +351,22 @@ function escapeHtml(value) {
 
 function createReportId() {
   return `AX-${Math.floor(1000 + Math.random() * 9000)}`;
+}
+
+function setDiagnosisDefect(defectKey) {
+  if (!defectKey || !defectData[defectKey]) return;
+  if (defectKey !== state.defectKey) {
+    state.reportId = createReportId();
+  }
+  state.defectKey = defectKey;
+}
+
+function setDiagnosisSeverity(severity) {
+  if (!severity) return;
+  if (severity !== state.severity) {
+    state.reportId = createReportId();
+  }
+  state.severity = severity;
 }
 
 function readFileAsDataUrl(file) {
@@ -424,12 +441,12 @@ function applyPrediction(prediction) {
   const severity = normalizeSeverity(prediction.severity || "");
 
   if (defectKey) {
-    state.defectKey = defectKey;
+    setDiagnosisDefect(defectKey);
     elements.defectSelect.value = defectKey;
   }
 
   if (severity) {
-    state.severity = severity;
+    setDiagnosisSeverity(severity);
   }
 
   state.prediction = prediction;
@@ -686,6 +703,7 @@ function renderLoginRoles() {
       <button class="login-user ${user.role === state.selectedLoginRole ? "active" : ""}" type="button" data-login-role="${escapeHtml(user.role)}">
         <span class="material-symbols-outlined">${escapeHtml(user.icon)}</span>
         <strong>${escapeHtml(user.role)}</strong>
+        <span class="login-user-name">${escapeHtml(user.name)}</span>
         <small>${escapeHtml(user.label)}</small>
       </button>
     `)
@@ -695,15 +713,14 @@ function renderLoginRoles() {
 function selectLoginRole(role) {
   const user = getLoginUserByRole(role);
   state.selectedLoginRole = user.role;
-  if (!elements.loginNameInput.value.trim()) {
-    elements.loginNameInput.value = user.name;
-  }
+  elements.loginNameInput.value = user.name;
   renderLoginRoles();
 }
 
 function applyCurrentUser(user) {
   state.currentUser = user;
   elements.authUserName.textContent = user.name;
+  elements.sidebarRoleName.textContent = user.role;
   elements.inspectorInput.value = user.name;
   elements.historyUserFilter.value = user.name;
   document.body.classList.remove("auth-pending");
@@ -739,6 +756,7 @@ function signOut() {
   localStorage.removeItem(userStorageKey);
   state.currentUser = null;
   elements.authUserName.textContent = "Guest";
+  elements.sidebarRoleName.textContent = "Guest";
   elements.loginNameInput.value = getLoginUserByRole(state.selectedLoginRole).name;
   document.body.classList.add("auth-pending");
   renderLoginRoles();
@@ -807,7 +825,7 @@ function bindEvents() {
   elements.logoutButton.addEventListener("click", signOut);
 
   elements.defectSelect.addEventListener("change", (event) => {
-    state.defectKey = event.target.value;
+    setDiagnosisDefect(event.target.value);
     state.prediction = null;
     renderDiagnosis();
   });
@@ -815,7 +833,7 @@ function bindEvents() {
   elements.severityGroup.addEventListener("click", (event) => {
     const button = event.target.closest("[data-severity]");
     if (!button) return;
-    state.severity = button.dataset.severity;
+    setDiagnosisSeverity(button.dataset.severity);
     state.prediction = null;
     renderDiagnosis();
   });
@@ -823,7 +841,7 @@ function bindEvents() {
   elements.severityThumbs.addEventListener("click", (event) => {
     const button = event.target.closest("[data-thumb]");
     if (!button) return;
-    state.severity = button.dataset.thumb;
+    setDiagnosisSeverity(button.dataset.thumb);
     state.prediction = null;
     renderDiagnosis();
   });
@@ -836,8 +854,8 @@ function bindEvents() {
 
   document.getElementById("resetBtn").addEventListener("click", () => {
     window.setTimeout(() => {
-      state.defectKey = "porosity";
-      state.severity = "medium";
+      setDiagnosisDefect("porosity");
+      setDiagnosisSeverity("medium");
       state.prediction = null;
       if (state.uploadedImageUrl) {
         URL.revokeObjectURL(state.uploadedImageUrl);
@@ -900,9 +918,9 @@ function bindEvents() {
 
     const useDefect = event.target.closest("[data-use-defect]");
     if (useDefect) {
-      state.defectKey = useDefect.dataset.useDefect;
+      setDiagnosisDefect(useDefect.dataset.useDefect);
       if (useDefect.dataset.useSeverity) {
-        state.severity = useDefect.dataset.useSeverity;
+        setDiagnosisSeverity(useDefect.dataset.useSeverity);
       }
       state.prediction = null;
       elements.defectSelect.value = state.defectKey;

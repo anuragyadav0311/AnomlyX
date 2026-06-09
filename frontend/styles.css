@@ -191,8 +191,15 @@ body:not(.auth-pending) .login-view {
 }
 
 .login-user strong,
+.login-user-name,
 .login-user small {
   display: block;
+}
+
+.login-user-name {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .login-user small {
